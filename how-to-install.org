@@ -1,4 +1,4 @@
-#+title: hypr-bubblemv install notes
+#+title: bubblemv install notes
 
 * Install With hyprpm
 

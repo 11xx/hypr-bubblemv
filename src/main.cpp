@@ -69,7 +69,7 @@ namespace {
 
     SDispatchResult nativeMove(PHLWINDOW window, const SParsedDirection& direction) {
         if (!window || !window->layoutTarget())
-            return {.success = false, .error = "hypr-bubblemv: no active window target"};
+            return {.success = false, .error = "bubblemv: no active window target"};
 
         g_layoutManager->moveInDirection(window->layoutTarget(), direction.name);
         window->warpCursor();
@@ -86,11 +86,11 @@ namespace {
     SDispatchResult moveImpl(std::string_view rawDirection) {
         const auto direction = parseDirection(rawDirection);
         if (direction.dir == Math::DIRECTION_DEFAULT)
-            return {.success = false, .error = "hypr-bubblemv: expected left/right/up/down"};
+            return {.success = false, .error = "bubblemv: expected left/right/up/down"};
 
         const auto window = Desktop::focusState()->window();
         if (!window)
-            return {.success = false, .error = "hypr-bubblemv: no active window"};
+            return {.success = false, .error = "bubblemv: no active window"};
 
         if (window->m_isFloating || window->isFullscreen())
             return nativeMove(window, direction);

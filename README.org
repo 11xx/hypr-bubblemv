@@ -1,8 +1,8 @@
-#+title: hypr-bubblemv
+#+title: bubblemv
 
 * Purpose
 
-=hypr-bubblemv= adds directional bubble movement for Hyprland's native Dwindle
+=bubblemv= adds directional bubble movement for Hyprland's native Dwindle
 layout.
 
 It is inspired by old bspwm bubble-move scripts, but it is implemented against
@@ -70,4 +70,3 @@ ortango:
 
 - https://gist.github.com/ortango/29f8f4f4d6465c522e82ac60e64bb35d
 - https://www.reddit.com/r/bspwm/comments/lkjk9f/comment/gnladvn/
-
