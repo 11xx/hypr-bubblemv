@@ -1,0 +1,53 @@
+#+title: hypr-bubblemv
+
+* Purpose
+
+=hypr-bubblemv= adds directional bubble movement for Hyprland's native Dwindle
+layout.
+
+It is inspired by old bspwm bubble-move scripts, but it is implemented against
+Hyprland v0.55+'s native layout internals. The plugin reads the active Dwindle
+node, decides whether a move should swap siblings, rotate the current split, or
+move out into a directional target, then delegates the actual layout changes to
+Hyprland.
+
+* Behavior
+
+For the active tiled Dwindle window:
+
+- Moving toward an immediate sibling swaps the active node with that sibling.
+- Moving orthogonally to the current split rotates the split so the active
+  window lands on the requested side.
+- Moving out of the current split edge preselects the side the window came from,
+  then uses Hyprland's native directional move.
+
+This keeps native Dwindle monitor fallback behavior for cross-monitor moves.
+
+* Usage
+
+From Lua config:
+
+#+begin_src lua
+hl.plugin.bubblemv.move("left")
+hl.plugin.bubblemv.move("down")
+hl.plugin.bubblemv.move("up")
+hl.plugin.bubblemv.move("right")
+#+end_src
+
+From a dispatcher:
+
+#+begin_src sh
+hyprctl dispatch bubblemv up
+#+end_src
+
+Accepted directions are =left=, =right=, =up=, =down= and their first-letter
+aliases. =top= and =bottom= are also accepted.
+
+* Notes
+
+This plugin is intentionally Dwindle-specific. Floating windows, fullscreen
+windows, non-Dwindle layouts, and unsupported states fall back to Hyprland's
+native directional window move.
+
+Hyprland plugins do not have stable ABI compatibility. Rebuild this plugin after
+updating Hyprland.

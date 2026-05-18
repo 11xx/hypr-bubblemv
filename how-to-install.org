@@ -1,0 +1,77 @@
+#+title: hypr-bubblemv install notes
+
+* Install With hyprpm
+
+After publishing this repository:
+
+#+begin_src sh
+hyprpm update
+hyprpm add https://github.com/11xx/hypr-bubblemv
+hyprpm enable hypr-bubblemv
+hyprpm reload
+#+end_src
+
+Then call the plugin from Hyprland Lua config:
+
+#+begin_src lua
+hl.plugin.bubblemv.move("up")
+#+end_src
+
+* Local Development Install
+
+Clone Hyprland source matching your running Hyprland build:
+
+#+begin_src sh
+git clone https://github.com/hyprwm/Hyprland /tmp/Hyprland
+#+end_src
+
+Build this plugin:
+
+#+begin_src sh
+cd /work/hyprlua/hypr-bubblemv
+make HYPRLAND_SRC=/tmp/Hyprland
+#+end_src
+
+Load it for the current session:
+
+#+begin_src sh
+hyprctl plugin load "$PWD/hypr-bubblemv.so"
+hyprctl plugin list
+#+end_src
+
+For this dotfiles setup, the Lua wrapper loads the development build directly
+with =hl.plugin.load=.
+
+* Development Dependencies
+
+Hyprland's plugin workflow commonly needs a C++ compiler and build tools such as
+=gcc=, =git=, =cmake=, =meson=, and =cpio=. Depending on the distro, install
+development packages for Wayland, xkbcommon, pixman, libdrm, pango/cairo,
+libinput, libudev, and hyprlang.
+
+* After Hyprland Updates
+
+Hyprland plugins must be rebuilt against the matching Hyprland version.
+
+For =hyprpm= installs:
+
+#+begin_src sh
+hyprpm update
+hyprpm reload
+#+end_src
+
+For local development builds:
+
+#+begin_src sh
+cd /work/hyprlua/hypr-bubblemv
+make clean
+make HYPRLAND_SRC=/tmp/Hyprland
+hyprctl plugin unload "$PWD/hypr-bubblemv.so"
+hyprctl plugin load "$PWD/hypr-bubblemv.so"
+#+end_src
+
+* Troubleshooting
+
+If =hyprctl plugin load= fails, first rebuild against the exact Hyprland source
+for your running compositor. If the Lua wrapper silently behaves like native
+movement, check =hyprctl plugin list= and Hyprland logs for plugin load errors.
