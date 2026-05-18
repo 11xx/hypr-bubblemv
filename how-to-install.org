@@ -27,10 +27,12 @@ hyprpm remove hypr-bubblemv
 hyprpm add file:///work/hyprlua/hypr-bubblemv
 #+end_src
 
-Then call the plugin from Hyprland Lua config:
+Then call the plugin from Hyprland Lua keybinds with a function wrapper:
 
 #+begin_src lua
-hl.plugin.bubblemv.move("up")
+bind("SUPER + SHIFT + K", function()
+    return hl.plugin.bubblemv.move("up")
+end)
 #+end_src
 
 * Local Development Install
@@ -55,8 +57,8 @@ hyprctl plugin load "$PWD/hypr-bubblemv.so"
 hyprctl plugin list
 #+end_src
 
-For this dotfiles setup, the Lua wrapper loads the development build directly
-with =hl.plugin.load=.
+When using =hyprpm=, do not load the plugin with =hl.plugin.load= from the Lua
+config. Let =hyprpm reload= manage load state.
 
 * Development Dependencies
 

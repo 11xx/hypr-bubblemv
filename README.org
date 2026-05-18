@@ -25,14 +25,27 @@ This keeps native Dwindle monitor fallback behavior for cross-monitor moves.
 
 * Usage
 
-From Lua config:
+For keybinds in Lua config, wrap the call in a function so the plugin runs when
+the key is pressed:
 
 #+begin_src lua
-hl.plugin.bubblemv.move("left")
-hl.plugin.bubblemv.move("down")
-hl.plugin.bubblemv.move("up")
-hl.plugin.bubblemv.move("right")
+bind("SUPER + SHIFT + H", function()
+    return hl.plugin.bubblemv.move("left")
+end)
+bind("SUPER + SHIFT + J", function()
+    return hl.plugin.bubblemv.move("down")
+end)
+bind("SUPER + SHIFT + K", function()
+    return hl.plugin.bubblemv.move("up")
+end)
+bind("SUPER + SHIFT + L", function()
+    return hl.plugin.bubblemv.move("right")
+end)
 #+end_src
+
+Do not pass =hl.plugin.bubblemv.move("left")= directly to a bind helper. That
+calls the plugin while the config is loading and passes the returned boolean to
+the bind, not the action itself.
 
 From a dispatcher:
 
