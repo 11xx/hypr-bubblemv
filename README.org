@@ -62,3 +62,12 @@ native directional window move.
 
 Hyprland plugins do not have stable ABI compatibility. Rebuild this plugin after
 updating Hyprland.
+
+* Credits
+
+This plugin was inspired by =bubblemv=, an old bspwm window movement script by
+ortango:
+
+- https://gist.github.com/ortango/29f8f4f4d6465c522e82ac60e64bb35d
+- https://www.reddit.com/r/bspwm/comments/lkjk9f/comment/gnladvn/
+
