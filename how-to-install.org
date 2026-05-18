@@ -45,6 +45,21 @@ bind("SUPER + SHIFT + K", bubblemv("up"))
 bind("SUPER + SHIFT + L", bubblemv("right"))
 #+end_src
 
+Optional config:
+
+#+begin_src lua
+hl.config({
+    plugin = {
+        bubblemv = {
+            reset_split_ratio_on_rotate = true,
+        },
+    },
+})
+#+end_src
+
+This is already the default. Set it to =false= only if you want orientation
+changes to preserve the previous split ratio.
+
 * Local Development Install
 
 Clone Hyprland source matching your running Hyprland build:

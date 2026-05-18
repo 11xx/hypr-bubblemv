@@ -1,7 +1,10 @@
 #include <src/includes.hpp>
 #include <src/Compositor.hpp>
+#include <src/config/ConfigValue.hpp>
 #include <src/config/shared/ConfigErrors.hpp>
+#include <src/config/values/ConfigValues.hpp>
 #include <src/desktop/state/FocusState.hpp>
+#include <src/desktop/Workspace.hpp>
 #include <src/desktop/view/Window.hpp>
 #include <src/helpers/Monitor.hpp>
 #include <src/helpers/math/Direction.hpp>
@@ -13,6 +16,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <optional>
 #include <string>
 #include <string_view>
 
@@ -83,19 +87,85 @@ namespace {
         }
     }
 
-    SDispatchResult nativeMove(PHLWINDOW window, const SParsedDirection& direction) {
-        if (!window || !window->layoutTarget())
-            return {.success = false, .error = "bubblemv: no active window target"};
+    std::optional<Vector2D> focalPointForDirection(PHLWINDOW window, Math::eDirection dir) {
+        if (!window)
+            return std::nullopt;
 
-        g_layoutManager->moveInDirection(window->layoutTarget(), direction.name);
-        window->warpCursor();
-        return {};
+        const auto box = window->getWindowIdealBoundingBoxIgnoreReserved();
+
+        switch (dir) {
+            case Math::DIRECTION_UP: return box.pos() + Vector2D{box.size().x / 2.0, -1.0};
+            case Math::DIRECTION_DOWN: return box.pos() + Vector2D{box.size().x / 2.0, box.size().y + 1.0};
+            case Math::DIRECTION_LEFT: return box.pos() + Vector2D{-1.0, box.size().y / 2.0};
+            case Math::DIRECTION_RIGHT: return box.pos() + Vector2D{box.size().x + 1.0, box.size().y / 2.0};
+            default: return std::nullopt;
+        }
     }
 
     SDispatchResult layoutMsg(std::string_view msg) {
         const auto result = g_layoutManager->layoutMsg(msg);
         if (!result)
             return {.success = false, .error = result.error().message};
+        return {};
+    }
+
+    SDispatchResult spaceLayoutMsg(const SP<Layout::CSpace>& space, std::string_view msg) {
+        if (!space)
+            return {.success = false, .error = "bubblemv: no target space"};
+
+        const auto result = space->layoutMsg(msg);
+        if (!result)
+            return {.success = false, .error = result.error().message};
+        return {};
+    }
+
+    SDispatchResult preselectNativeMoveSide(PHLWINDOW window, const SParsedDirection& direction) {
+        const auto sourceMonitor = window ? window->m_monitor.lock() : nullptr;
+        const auto focalPoint    = focalPointForDirection(window, direction.dir);
+        const auto targetMonitor = focalPoint ? g_pCompositor->getMonitorFromVector(*focalPoint) : nullptr;
+        const auto preselect     = "preselect " + direction.opposite;
+
+        if (sourceMonitor && targetMonitor && targetMonitor != sourceMonitor && targetMonitor->m_activeWorkspace)
+            return spaceLayoutMsg(targetMonitor->m_activeWorkspace->m_space, preselect);
+
+        return layoutMsg(preselect);
+    }
+
+    bool resetSplitRatioOnRotate() {
+        static auto PRESET = CConfigValue<Config::INTEGER>("plugin:bubblemv:reset_split_ratio_on_rotate");
+        return PRESET.good() && *PRESET != 0;
+    }
+
+    float defaultDwindleSplitRatio() {
+        static auto PDEFAULTSPLIT = CConfigValue<Config::FLOAT>("dwindle:default_split_ratio");
+        if (!PDEFAULTSPLIT.good())
+            return 1.F;
+
+        return std::clamp(*PDEFAULTSPLIT, 0.1F, 1.9F);
+    }
+
+    SDispatchResult rotateSplit(const SP<Layout::Tiled::SDwindleNodeData>& parent, bool swapChildren) {
+        if (!parent)
+            return {.success = false, .error = "bubblemv: no parent split"};
+
+        if (swapChildren)
+            std::swap(parent->children[0], parent->children[1]);
+
+        parent->splitTop = !parent->splitTop;
+
+        if (resetSplitRatioOnRotate())
+            parent->splitRatio = defaultDwindleSplitRatio();
+
+        parent->recalcSizePosRecursive();
+        return {};
+    }
+
+    SDispatchResult nativeMove(PHLWINDOW window, const SParsedDirection& direction) {
+        if (!window || !window->layoutTarget())
+            return {.success = false, .error = "bubblemv: no active window target"};
+
+        g_layoutManager->moveInDirection(window->layoutTarget(), direction.name);
+        window->warpCursor();
         return {};
     }
 
@@ -142,7 +212,7 @@ namespace {
                 if (shouldNoopAtScreenEdge(window, direction.dir))
                     return {};
 
-                const auto preselect = layoutMsg("preselect " + direction.opposite);
+                const auto preselect = preselectNativeMoveSide(window, direction);
                 if (!preselect.success)
                     return preselect;
                 return nativeMove(window, direction);
@@ -152,13 +222,7 @@ namespace {
         }
 
         const bool activeShouldBeFirst = isLowSide(direction.dir);
-        if (activeIsFirst != activeShouldBeFirst) {
-            const auto swapped = layoutMsg("swapsplit");
-            if (!swapped.success)
-                return swapped;
-        }
-
-        return layoutMsg("togglesplit");
+        return rotateSplit(parent, activeIsFirst != activeShouldBeFirst);
     }
 
     SDispatchResult bubblemvDispatcher(std::string input) {
@@ -184,6 +248,11 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE handle) {
 
     HyprlandAPI::addDispatcherV2(PHANDLE, "bubblemv", bubblemvDispatcher);
     HyprlandAPI::addLuaFunction(PHANDLE, "bubblemv", "move", luaBubblemvMove);
+    HyprlandAPI::addConfigValueV2(
+        PHANDLE,
+        Config::Values::makeConfigValue<Config::Values::Bool>("plugin:bubblemv:reset_split_ratio_on_rotate",
+                                                              "Reset Dwindle split ratio to dwindle:default_split_ratio when bubblemv rotates a split",
+                                                              true));
 
     return {
         "bubblemv",

@@ -17,9 +17,12 @@ For the active tiled Dwindle window:
 
 - Moving toward an immediate sibling swaps the active node with that sibling.
 - Moving orthogonally to the current split rotates the split so the active
-  window lands on the requested side.
+  window lands on the requested side. By default, that new split uses
+  Hyprland's configured Dwindle split ratio instead of preserving the old
+  split's ratio in the new orientation.
 - Moving out of the current split edge preselects the side the window came from,
-  then uses Hyprland's native directional move.
+  then uses Hyprland's native directional move. When the move crosses monitors,
+  the preselect is applied to the destination monitor's active workspace.
 
 This keeps native Dwindle monitor fallback behavior for cross-monitor moves.
 
@@ -53,6 +56,24 @@ hyprctl dispatch bubblemv up
 
 Accepted directions are =left=, =right=, =up=, =down=, their first-letter aliases
 =l=, =r=, =u=, =d=, and the aliases =top=, =t=, =bottom=, =b=.
+
+* Configuration
+
+By default, when =bubblemv= rotates a split it resets that node's ratio to
+Hyprland's =dwindle:default_split_ratio=. This avoids carrying a wide 80/20
+horizontal split into an 80/20 vertical split.
+
+To preserve the previous ratio on rotation:
+
+#+begin_src lua
+hl.config({
+    plugin = {
+        bubblemv = {
+            reset_split_ratio_on_rotate = false,
+        },
+    },
+})
+#+end_src
 
 * Notes
 
