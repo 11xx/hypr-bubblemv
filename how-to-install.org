@@ -11,6 +11,22 @@ hyprpm enable hypr-bubblemv
 hyprpm reload
 #+end_src
 
+For local testing through =hyprpm=, use a =file://= URL:
+
+#+begin_src sh
+hyprpm add file:///work/hyprlua/hypr-bubblemv
+hyprpm enable hypr-bubblemv
+hyprpm reload
+#+end_src
+
+If the repository is already registered, remove it before adding the local URL
+again:
+
+#+begin_src sh
+hyprpm remove hypr-bubblemv
+hyprpm add file:///work/hyprlua/hypr-bubblemv
+#+end_src
+
 Then call the plugin from Hyprland Lua config:
 
 #+begin_src lua
@@ -75,3 +91,10 @@ hyprctl plugin load "$PWD/hypr-bubblemv.so"
 If =hyprctl plugin load= fails, first rebuild against the exact Hyprland source
 for your running compositor. If the Lua wrapper silently behaves like native
 movement, check =hyprctl plugin list= and Hyprland logs for plugin load errors.
+
+For =hyprpm= build failures, rerun the update/build with verbose output:
+
+#+begin_src sh
+hyprpm -v update
+hyprpm list
+#+end_src

@@ -5,14 +5,15 @@ TARGET = hypr-bubblemv.so
 SRC = src/main.cpp
 
 CXXFLAGS += -shared -fPIC -std=c++2b -O2 -Wall -Wextra -Wno-unused-parameter -Wno-missing-field-initializers
-INCLUDES =
+INCLUDES = $(shell pkg-config --cflags --keep-system-cflags hyprland 2>/dev/null)
 ifneq ($(strip $(HYPRLAND_SRC)),)
 INCLUDES += -I$(HYPRLAND_SRC) -I$(HYPRLAND_SRC)/protocols
 endif
 
-PKG_CONFIG_DEPS = hyprland pixman-1 libdrm pangocairo libinput libudev wayland-server xkbcommon hyprlang
-PKG_CFLAGS := $(shell pkg-config --cflags $(PKG_CONFIG_DEPS) 2>/dev/null)
-PKG_LIBS := $(shell pkg-config --libs pangocairo 2>/dev/null)
+LUA_CFLAGS := $(shell pkg-config --cflags lua 2>/dev/null || pkg-config --cflags lua5.4 2>/dev/null || pkg-config --cflags lua-5.4 2>/dev/null)
+LUA_LIBS := $(shell pkg-config --libs lua 2>/dev/null || pkg-config --libs lua5.4 2>/dev/null || pkg-config --libs lua-5.4 2>/dev/null)
+PKG_CFLAGS := $(INCLUDES) $(LUA_CFLAGS)
+PKG_LIBS := $(LUA_LIBS)
 
 .PHONY: all clean check-hyprland-src check-deps
 
@@ -24,11 +25,12 @@ check-hyprland-src:
 	fi
 
 check-deps:
-	@pkg-config --exists $(PKG_CONFIG_DEPS) || \
-		(printf 'Missing build dependencies. pkg-config could not find: %s\n' "$(PKG_CONFIG_DEPS)" >&2; exit 1)
+	@if test -z "$(HYPRLAND_SRC)"; then pkg-config --exists hyprland || \
+		(printf 'Missing Hyprland headers. Run hyprpm update, or set PKG_CONFIG_PATH to a directory containing hyprland.pc.\n' >&2; exit 1); \
+	fi
 
 $(TARGET): $(SRC)
-	$(CXX) $(CXXFLAGS) $(INCLUDES) $(PKG_CFLAGS) $< -o $@ $(PKG_LIBS)
+	$(CXX) $(CXXFLAGS) $(PKG_CFLAGS) $< -o $@ $(PKG_LIBS)
 
 clean:
 	rm -f $(TARGET)
