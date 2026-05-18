@@ -1,6 +1,4 @@
 #include <src/includes.hpp>
-
-#define private public
 #include <src/Compositor.hpp>
 #include <src/config/shared/ConfigErrors.hpp>
 #include <src/desktop/state/FocusState.hpp>
@@ -11,7 +9,6 @@
 #include <src/layout/algorithm/tiled/dwindle/DwindleAlgorithm.hpp>
 #include <src/layout/space/Space.hpp>
 #include <src/plugins/PluginAPI.hpp>
-#undef private
 
 #include <algorithm>
 #include <cctype>
