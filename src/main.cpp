@@ -3,6 +3,7 @@
 #include <src/config/shared/ConfigErrors.hpp>
 #include <src/desktop/state/FocusState.hpp>
 #include <src/desktop/view/Window.hpp>
+#include <src/helpers/Monitor.hpp>
 #include <src/helpers/math/Direction.hpp>
 #include <src/layout/LayoutManager.hpp>
 #include <src/layout/algorithm/Algorithm.hpp>
@@ -59,12 +60,27 @@ namespace {
         return dir == Math::DIRECTION_LEFT || dir == Math::DIRECTION_UP;
     }
 
-    bool hasMonitorInDirection(PHLWINDOW window, Math::eDirection dir) {
+    bool shouldNoopAtScreenEdge(PHLWINDOW window, Math::eDirection dir) {
         if (!window)
             return false;
 
         const auto monitor = window->m_monitor.lock();
-        return g_pCompositor->getMonitorInDirection(monitor, dir) != nullptr;
+        if (!monitor)
+            return false;
+
+        if (g_pCompositor->getMonitorInDirection(monitor, dir) != nullptr)
+            return false;
+
+        const auto box  = window->getWindowIdealBoundingBoxIgnoreReserved();
+        const auto work = monitor->logicalBoxMinusReserved();
+
+        switch (dir) {
+            case Math::DIRECTION_LEFT: return STICKS(box.x, work.x);
+            case Math::DIRECTION_RIGHT: return STICKS(box.x + box.w, work.x + work.w);
+            case Math::DIRECTION_UP: return STICKS(box.y, work.y);
+            case Math::DIRECTION_DOWN: return STICKS(box.y + box.h, work.y + work.h);
+            default: return false;
+        }
     }
 
     SDispatchResult nativeMove(PHLWINDOW window, const SParsedDirection& direction) {
@@ -123,7 +139,7 @@ namespace {
         if (parentVertical == commandVertical) {
             const bool commandTowardFirst = isLowSide(direction.dir);
             if (activeIsFirst == commandTowardFirst) {
-                if (!hasMonitorInDirection(window, direction.dir))
+                if (shouldNoopAtScreenEdge(window, direction.dir))
                     return {};
 
                 const auto preselect = layoutMsg("preselect " + direction.opposite);
