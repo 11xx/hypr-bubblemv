@@ -9,7 +9,7 @@ After publishing this repository:
 
 #+begin_src sh
 hyprpm update
-hyprpm add https://github.com/11xx/hypr-bubblemv
+hyprpm add https://github.com/useless-utils/hypr-bubblemv
 hyprpm enable bubblemv
 hyprpm reload
 #+end_src
