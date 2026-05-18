@@ -170,9 +170,9 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE handle) {
     HyprlandAPI::addLuaFunction(PHANDLE, "bubblemv", "move", luaBubblemvMove);
 
     return {
-        "hypr-bubblemv",
+        "bubblemv",
         "Directional Dwindle bubble movement for Hyprland",
-        "OpenAI Codex",
+        "11xx",
         "0.1.0",
     };
 }

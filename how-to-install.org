@@ -7,15 +7,15 @@ After publishing this repository:
 #+begin_src sh
 hyprpm update
 hyprpm add https://github.com/11xx/hypr-bubblemv
-hyprpm enable hypr-bubblemv
+hyprpm enable bubblemv
 hyprpm reload
 #+end_src
 
 For local testing through =hyprpm=, use a =file://= URL:
 
 #+begin_src sh
-hyprpm add file:///work/hyprlua/hypr-bubblemv
-hyprpm enable hypr-bubblemv
+hyprpm add file:///path/to/hypr-bubblemv
+hyprpm enable bubblemv
 hyprpm reload
 #+end_src
 
@@ -24,18 +24,10 @@ again:
 
 #+begin_src sh
 hyprpm remove hypr-bubblemv
-hyprpm add file:///work/hyprlua/hypr-bubblemv
+hyprpm add file:///path/to/hypr-bubblemv
 #+end_src
 
-Then call the plugin from Hyprland Lua keybinds with a function wrapper:
-
-#+begin_src lua
-bind("SUPER + SHIFT + K", function()
-    return hl.plugin.bubblemv.move("up")
-end)
-#+end_src
-
-Or define helpers:
+Then call the plugin from Hyprland Lua keybinds with a small helper:
 
 #+begin_src lua
 function bubblemv(direction)
@@ -44,10 +36,10 @@ function bubblemv(direction)
     end
 end
 
-bubblemv_left = bubblemv("left")
-bubblemv_down = bubblemv("down")
-bubblemv_up = bubblemv("up")
-bubblemv_right = bubblemv("right")
+bind("SUPER + SHIFT + H", bubblemv("left"))
+bind("SUPER + SHIFT + J", bubblemv("down"))
+bind("SUPER + SHIFT + K", bubblemv("up"))
+bind("SUPER + SHIFT + L", bubblemv("right"))
 #+end_src
 
 * Local Development Install
@@ -61,14 +53,14 @@ git clone https://github.com/hyprwm/Hyprland /tmp/Hyprland
 Build this plugin:
 
 #+begin_src sh
-cd /work/hyprlua/hypr-bubblemv
+cd /path/to/hypr-bubblemv
 make HYPRLAND_SRC=/tmp/Hyprland
 #+end_src
 
 Load it for the current session:
 
 #+begin_src sh
-hyprctl plugin load "$PWD/hypr-bubblemv.so"
+hyprctl plugin load "$PWD/bubblemv.so"
 hyprctl plugin list
 #+end_src
 
@@ -96,11 +88,11 @@ hyprpm reload
 For local development builds:
 
 #+begin_src sh
-cd /work/hyprlua/hypr-bubblemv
+cd /path/to/hypr-bubblemv
 make clean
 make HYPRLAND_SRC=/tmp/Hyprland
-hyprctl plugin unload "$PWD/hypr-bubblemv.so"
-hyprctl plugin load "$PWD/hypr-bubblemv.so"
+hyprctl plugin unload "$PWD/bubblemv.so"
+hyprctl plugin load "$PWD/bubblemv.so"
 #+end_src
 
 * Troubleshooting

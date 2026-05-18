@@ -25,29 +25,8 @@ This keeps native Dwindle monitor fallback behavior for cross-monitor moves.
 
 * Usage
 
-For keybinds in Lua config, wrap the call in a function so the plugin runs when
-the key is pressed:
-
-#+begin_src lua
-bind("SUPER + SHIFT + H", function()
-    return hl.plugin.bubblemv.move("left")
-end)
-bind("SUPER + SHIFT + J", function()
-    return hl.plugin.bubblemv.move("down")
-end)
-bind("SUPER + SHIFT + K", function()
-    return hl.plugin.bubblemv.move("up")
-end)
-bind("SUPER + SHIFT + L", function()
-    return hl.plugin.bubblemv.move("right")
-end)
-#+end_src
-
-Do not pass =hl.plugin.bubblemv.move("left")= directly to a bind helper. That
-calls the plugin while the config is loading and passes the returned boolean to
-the bind, not the action itself.
-
-If you prefer named helpers, define them once:
+For keybinds in Lua config, define a small helper so the plugin runs when the
+key is pressed:
 
 #+begin_src lua
 function bubblemv(direction)
@@ -56,20 +35,15 @@ function bubblemv(direction)
     end
 end
 
-bubblemv_left = bubblemv("left")
-bubblemv_down = bubblemv("down")
-bubblemv_up = bubblemv("up")
-bubblemv_right = bubblemv("right")
+bind("SUPER + SHIFT + H", bubblemv("left"))
+bind("SUPER + SHIFT + J", bubblemv("down"))
+bind("SUPER + SHIFT + K", bubblemv("up"))
+bind("SUPER + SHIFT + L", bubblemv("right"))
 #+end_src
 
-Then bind them like normal:
-
-#+begin_src lua
-bind("SUPER + SHIFT + H", bubblemv_left)
-bind("SUPER + SHIFT + J", bubblemv_down)
-bind("SUPER + SHIFT + K", bubblemv_up)
-bind("SUPER + SHIFT + L", bubblemv_right)
-#+end_src
+Do not pass =hl.plugin.bubblemv.move("left")= directly to a bind helper. That
+calls the plugin while the config is loading and passes the returned boolean to
+the bind, not the action itself.
 
 From a dispatcher:
 
@@ -77,8 +51,8 @@ From a dispatcher:
 hyprctl dispatch bubblemv up
 #+end_src
 
-Accepted directions are =left=, =right=, =up=, =down= and their first-letter
-aliases. =top= and =bottom= are also accepted.
+Accepted directions are =left=, =right=, =up=, =down=, their first-letter aliases
+=l=, =r=, =u=, =d=, and the aliases =top=, =t=, =bottom=, =b=.
 
 * Notes
 

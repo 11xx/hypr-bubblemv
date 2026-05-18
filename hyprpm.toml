@@ -2,10 +2,10 @@
 name = "hypr-bubblemv"
 authors = ["11xx"]
 
-[hypr-bubblemv]
+[bubblemv]
 description = "Directional Dwindle bubble movement for Hyprland"
 authors = ["11xx"]
-output = "hypr-bubblemv.so"
+output = "bubblemv.so"
 build = [
   "make all"
 ]

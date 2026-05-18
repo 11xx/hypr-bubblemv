@@ -1,7 +1,7 @@
 CXX ?= g++
 HYPRLAND_SRC ?=
 
-TARGET = hypr-bubblemv.so
+TARGET = bubblemv.so
 SRC = src/main.cpp
 
 CXXFLAGS += -shared -fPIC -std=c++2b -O2 -Wall -Wextra -Wno-unused-parameter -Wno-missing-field-initializers
