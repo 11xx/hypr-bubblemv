@@ -47,6 +47,30 @@ Do not pass =hl.plugin.bubblemv.move("left")= directly to a bind helper. That
 calls the plugin while the config is loading and passes the returned boolean to
 the bind, not the action itself.
 
+If you prefer named helpers, define them once:
+
+#+begin_src lua
+function bubblemv(direction)
+    return function()
+        return hl.plugin.bubblemv.move(direction)
+    end
+end
+
+bubblemv_left = bubblemv("left")
+bubblemv_down = bubblemv("down")
+bubblemv_up = bubblemv("up")
+bubblemv_right = bubblemv("right")
+#+end_src
+
+Then bind them like normal:
+
+#+begin_src lua
+bind("SUPER + SHIFT + H", bubblemv_left)
+bind("SUPER + SHIFT + J", bubblemv_down)
+bind("SUPER + SHIFT + K", bubblemv_up)
+bind("SUPER + SHIFT + L", bubblemv_right)
+#+end_src
+
 From a dispatcher:
 
 #+begin_src sh

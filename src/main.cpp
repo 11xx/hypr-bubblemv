@@ -59,6 +59,14 @@ namespace {
         return dir == Math::DIRECTION_LEFT || dir == Math::DIRECTION_UP;
     }
 
+    bool hasMonitorInDirection(PHLWINDOW window, Math::eDirection dir) {
+        if (!window)
+            return false;
+
+        const auto monitor = window->m_monitor.lock();
+        return g_pCompositor->getMonitorInDirection(monitor, dir) != nullptr;
+    }
+
     SDispatchResult nativeMove(PHLWINDOW window, const SParsedDirection& direction) {
         if (!window || !window->layoutTarget())
             return {.success = false, .error = "hypr-bubblemv: no active window target"};
@@ -115,6 +123,9 @@ namespace {
         if (parentVertical == commandVertical) {
             const bool commandTowardFirst = isLowSide(direction.dir);
             if (activeIsFirst == commandTowardFirst) {
+                if (!hasMonitorInDirection(window, direction.dir))
+                    return {};
+
                 const auto preselect = layoutMsg("preselect " + direction.opposite);
                 if (!preselect.success)
                     return preselect;

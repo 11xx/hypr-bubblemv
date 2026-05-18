@@ -35,6 +35,21 @@ bind("SUPER + SHIFT + K", function()
 end)
 #+end_src
 
+Or define helpers:
+
+#+begin_src lua
+function bubblemv(direction)
+    return function()
+        return hl.plugin.bubblemv.move(direction)
+    end
+end
+
+bubblemv_left = bubblemv("left")
+bubblemv_down = bubblemv("down")
+bubblemv_up = bubblemv("up")
+bubblemv_right = bubblemv("right")
+#+end_src
+
 * Local Development Install
 
 Clone Hyprland source matching your running Hyprland build:
