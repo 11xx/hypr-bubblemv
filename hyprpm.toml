@@ -1,7 +1,9 @@
 [repository]
+# Repository name. This can differ from the plugin name shown by hyprpm.
 name = "hypr-bubblemv"
 authors = ["11xx"]
 
+# Plugin name. This is what appears in hyprpm's plugin list and enable command.
 [bubblemv]
 description = "Directional Dwindle bubble movement for Hyprland"
 authors = ["11xx"]

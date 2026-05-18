@@ -2,6 +2,9 @@
 
 * Install With hyprpm
 
+=hypr-bubblemv= is the repository name. =bubblemv= is the plugin name shown by
+=hyprpm list= and used by =hyprpm enable=.
+
 After publishing this repository:
 
 #+begin_src sh
@@ -20,7 +23,7 @@ hyprpm reload
 #+end_src
 
 If the repository is already registered, remove it before adding the local URL
-again:
+again. =hyprpm remove= takes the repository name:
 
 #+begin_src sh
 hyprpm remove hypr-bubblemv
