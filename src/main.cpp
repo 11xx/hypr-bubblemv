@@ -64,7 +64,33 @@ namespace {
         return dir == Math::DIRECTION_LEFT || dir == Math::DIRECTION_UP;
     }
 
-    bool shouldNoopAtScreenEdge(PHLWINDOW window, Math::eDirection dir) {
+    Vector2D focalPointOutsideBox(const CBox& box, Math::eDirection dir) {
+        switch (dir) {
+            case Math::DIRECTION_UP: return box.pos() + Vector2D{box.size().x / 2.0, -1.0};
+            case Math::DIRECTION_DOWN: return box.pos() + Vector2D{box.size().x / 2.0, box.size().y + 1.0};
+            case Math::DIRECTION_LEFT: return box.pos() + Vector2D{-1.0, box.size().y / 2.0};
+            case Math::DIRECTION_RIGHT: return box.pos() + Vector2D{box.size().x + 1.0, box.size().y / 2.0};
+            default: return box.middle();
+        }
+    }
+
+    bool siblingIsInDirection(const SP<Layout::Tiled::SDwindleNodeData>& node, const SP<Layout::Tiled::SDwindleNodeData>& sibling, Math::eDirection dir) {
+        if (!node || !sibling)
+            return false;
+
+        const auto nodeCenter    = node->box.middle();
+        const auto siblingCenter = sibling->box.middle();
+
+        switch (dir) {
+            case Math::DIRECTION_LEFT: return siblingCenter.x < nodeCenter.x;
+            case Math::DIRECTION_RIGHT: return siblingCenter.x > nodeCenter.x;
+            case Math::DIRECTION_UP: return siblingCenter.y < nodeCenter.y;
+            case Math::DIRECTION_DOWN: return siblingCenter.y > nodeCenter.y;
+            default: return false;
+        }
+    }
+
+    bool shouldNoopAtScreenEdge(PHLWINDOW window, const SP<Layout::Tiled::SDwindleNodeData>& node, Math::eDirection dir) {
         if (!window)
             return false;
 
@@ -75,8 +101,8 @@ namespace {
         if (g_pCompositor->getMonitorInDirection(monitor, dir) != nullptr)
             return false;
 
-        const auto box  = window->getWindowIdealBoundingBoxIgnoreReserved();
-        const auto work = monitor->logicalBoxMinusReserved();
+        const auto box  = node ? node->box : window->layoutTarget()->position();
+        const auto work = window->layoutTarget() && window->layoutTarget()->space() ? window->layoutTarget()->space()->workArea() : monitor->logicalBoxMinusReserved();
 
         switch (dir) {
             case Math::DIRECTION_LEFT: return STICKS(box.x, work.x);
@@ -169,6 +195,25 @@ namespace {
         return {};
     }
 
+    SDispatchResult moveOutOfParentSameMonitor(Layout::Tiled::CDwindleAlgorithm* dwindle, PHLWINDOW window, const SP<Layout::Tiled::SDwindleNodeData>& parent,
+                                               const SParsedDirection& direction) {
+        if (!dwindle || !window || !window->layoutTarget() || !parent)
+            return {.success = false, .error = "bubblemv: cannot move out of parent"};
+
+        const auto preselect = layoutMsg("preselect " + direction.opposite);
+        if (!preselect.success)
+            return preselect;
+
+        const auto target     = window->layoutTarget();
+        const auto focalPoint = focalPointOutsideBox(parent->box, direction.dir);
+
+        window->setAnimationsToMove();
+        dwindle->removeTarget(target);
+        dwindle->movedTarget(target, focalPoint);
+        window->warpCursor();
+        return {};
+    }
+
     SDispatchResult moveImpl(std::string_view rawDirection) {
         const auto direction = parseDirection(rawDirection);
         if (direction.dir == Math::DIRECTION_DEFAULT)
@@ -207,15 +252,22 @@ namespace {
         const bool activeIsFirst = parent->children[0] == node;
 
         if (parentVertical == commandVertical) {
-            const bool commandTowardFirst = isLowSide(direction.dir);
-            if (activeIsFirst == commandTowardFirst) {
-                if (shouldNoopAtScreenEdge(window, direction.dir))
-                    return {};
+            if (shouldNoopAtScreenEdge(window, node, direction.dir))
+                return {};
 
-                const auto preselect = preselectNativeMoveSide(window, direction);
-                if (!preselect.success)
-                    return preselect;
-                return nativeMove(window, direction);
+            const auto sibling = (activeIsFirst ? parent->children[1] : parent->children[0]).lock();
+            if (!siblingIsInDirection(node, sibling, direction.dir)) {
+                const auto windowFocalPoint = focalPointForDirection(window, direction.dir);
+                const auto sourceMonitor    = window->m_monitor.lock();
+                const auto targetMonitor    = windowFocalPoint ? g_pCompositor->getMonitorFromVector(*windowFocalPoint) : nullptr;
+                if (sourceMonitor && targetMonitor && targetMonitor != sourceMonitor) {
+                    const auto preselect = preselectNativeMoveSide(window, direction);
+                    if (!preselect.success)
+                        return preselect;
+                    return nativeMove(window, direction);
+                }
+
+                return moveOutOfParentSameMonitor(dwindle, window, parent, direction);
             }
 
             return layoutMsg("swapsplit");
