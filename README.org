@@ -91,3 +91,6 @@ ortango:
 
 - https://gist.github.com/ortango/29f8f4f4d6465c522e82ac60e64bb35d
 - https://www.reddit.com/r/bspwm/comments/lkjk9f/comment/gnladvn/
+
+* COMMENT Compatibility                                            :noexport:
+- v0.55.1 at commit a47147bc095e5b3be3eb8bd04f0ac242b968cd4d
