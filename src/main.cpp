@@ -6,7 +6,9 @@
 #include <src/desktop/state/FocusState.hpp>
 #include <src/desktop/Workspace.hpp>
 #include <src/desktop/view/Window.hpp>
-#include <src/helpers/Monitor.hpp>
+#include <src/managers/fullscreen/FullscreenController.hpp>
+#include <src/output/Monitor.hpp>
+#include <src/state/MonitorState.hpp>
 #include <src/helpers/math/Direction.hpp>
 #include <src/layout/LayoutManager.hpp>
 #include <src/layout/algorithm/Algorithm.hpp>
@@ -98,7 +100,7 @@ namespace {
         if (!monitor)
             return false;
 
-        if (g_pCompositor->getMonitorInDirection(monitor, dir) != nullptr)
+        if (State::monitorState()->query().relativeTo(monitor).inDirection(dir).run() != nullptr)
             return false;
 
         const auto box  = node ? node->box : window->layoutTarget()->position();
@@ -148,7 +150,7 @@ namespace {
     SDispatchResult preselectNativeMoveSide(PHLWINDOW window, const SParsedDirection& direction) {
         const auto sourceMonitor = window ? window->m_monitor.lock() : nullptr;
         const auto focalPoint    = focalPointForDirection(window, direction.dir);
-        const auto targetMonitor = focalPoint ? g_pCompositor->getMonitorFromVector(*focalPoint) : nullptr;
+        const auto targetMonitor = focalPoint ? State::monitorState()->query().vec(*focalPoint).run() : nullptr;
         const auto preselect     = "preselect " + direction.opposite;
 
         if (sourceMonitor && targetMonitor && targetMonitor != sourceMonitor && targetMonitor->m_activeWorkspace)
@@ -223,7 +225,7 @@ namespace {
         if (!window)
             return {.success = false, .error = "bubblemv: no active window"};
 
-        if (window->m_isFloating || window->isFullscreen())
+        if (window->m_isFloating || Fullscreen::controller()->isFullscreen(window))
             return nativeMove(window, direction);
 
         const auto target = window->layoutTarget();
@@ -259,7 +261,7 @@ namespace {
             if (!siblingIsInDirection(node, sibling, direction.dir)) {
                 const auto windowFocalPoint = focalPointForDirection(window, direction.dir);
                 const auto sourceMonitor    = window->m_monitor.lock();
-                const auto targetMonitor    = windowFocalPoint ? g_pCompositor->getMonitorFromVector(*windowFocalPoint) : nullptr;
+                const auto targetMonitor    = windowFocalPoint ? State::monitorState()->query().vec(*windowFocalPoint).run() : nullptr;
                 if (sourceMonitor && targetMonitor && targetMonitor != sourceMonitor) {
                     const auto preselect = preselectNativeMoveSide(window, direction);
                     if (!preselect.success)
