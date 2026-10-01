@@ -2,6 +2,7 @@
 #include <src/Compositor.hpp>
 #include <src/config/ConfigValue.hpp>
 #include <src/config/shared/ConfigErrors.hpp>
+#include <src/config/shared/actions/ConfigActions.hpp>
 #include <src/config/values/ConfigValues.hpp>
 #include <src/desktop/state/FocusState.hpp>
 #include <src/desktop/Workspace.hpp>
@@ -37,7 +38,6 @@ APICALL EXPORT std::string PLUGIN_API_VERSION() {
 namespace {
     struct SParsedDirection {
         Math::eDirection dir = Math::DIRECTION_DEFAULT;
-        std::string      name;
         std::string      opposite;
     };
 
@@ -48,13 +48,13 @@ namespace {
             lower.push_back(std::tolower(static_cast<unsigned char>(c)));
 
         if (lower == "l" || lower == "left")
-            return {Math::DIRECTION_LEFT, "left", "right"};
+            return {Math::DIRECTION_LEFT, "right"};
         if (lower == "r" || lower == "right")
-            return {Math::DIRECTION_RIGHT, "right", "left"};
+            return {Math::DIRECTION_RIGHT, "left"};
         if (lower == "u" || lower == "up" || lower == "t" || lower == "top")
-            return {Math::DIRECTION_UP, "up", "down"};
+            return {Math::DIRECTION_UP, "down"};
         if (lower == "d" || lower == "down" || lower == "b" || lower == "bottom")
-            return {Math::DIRECTION_DOWN, "down", "up"};
+            return {Math::DIRECTION_DOWN, "up"};
 
         return {};
     }
@@ -193,8 +193,9 @@ namespace {
         if (!window || !window->layoutTarget())
             return {.success = false, .error = "bubblemv: no active window target"};
 
-        g_layoutManager->moveInDirection(window->layoutTarget(), direction.name);
-        window->warpCursor();
+        const auto result = Config::Actions::moveInDirection(direction.dir, window);
+        if (!result)
+            return {.success = false, .error = result.error().message};
         return {};
     }
 
