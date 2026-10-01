@@ -321,9 +321,15 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE handle) {
 
     // The plugin reads Dwindle's node structs directly, so a build against
     // other headers than the running compositor's would corrupt memory.
+    // The header computes the client string in an inline function with a
+    // static local, which the dynamic linker shares across every load in one
+    // Hyprland process: after a failed load, a rebuilt copy still reports the
+    // first build's string until Hyprland restarts.
     if (std::string_view{__hyprland_api_get_hash()} != __hyprland_api_get_client_hash()) {
-        HyprlandAPI::addNotification(PHANDLE, "[bubblemv] Version mismatch: rebuild the plugin against the running Hyprland", CHyprColor{1.0, 0.2, 0.2, 1.0}, 5000);
-        throw std::runtime_error("[bubblemv] Version mismatch");
+        const std::string msg = std::string{"[bubblemv] Version mismatch: Hyprland is "} + __hyprland_api_get_hash() + ", plugin headers are " +
+            __hyprland_api_get_client_hash() + ". Rebuild with `hyprpm update -f`, then restart Hyprland.";
+        HyprlandAPI::addNotification(PHANDLE, msg, CHyprColor{1.0, 0.2, 0.2, 1.0}, 10000);
+        throw std::runtime_error(msg);
     }
 
     HyprlandAPI::addDispatcherV2(PHANDLE, "bubblemv", bubblemvDispatcher);

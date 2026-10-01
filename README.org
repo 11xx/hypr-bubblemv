@@ -27,8 +27,11 @@ shape, so a move across a split also falls back to the native move.
 
 Requires Hyprland 0.56 or later, and the Lua 5.5 development files Hyprland
 itself builds against. Plugins have no stable ABI, so rebuild after every
-Hyprland update (=hyprpm update=). The repository is =hypr-bubblemv=;
-the plugin is =bubblemv=.
+Hyprland update (=hyprpm update=). If it refuses to load with a version
+mismatch, the plugin headers differ from the running Hyprland: rebuild with
+=hyprpm update -f= and restart Hyprland, which keeps the first failed load's
+version for the rest of the session. The repository is =hypr-bubblemv=; the
+plugin is =bubblemv=.
 
 #+begin_src sh
 hyprpm add https://github.com/11xx/hypr-bubblemv
