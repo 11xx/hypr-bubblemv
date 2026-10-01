@@ -1,35 +1,44 @@
 #+title: bubblemv
 
-* Purpose
+Bubble-style directional window movement for Hyprland's Dwindle layout.
 
-=bubblemv= adds directional bubble movement for Hyprland's native Dwindle
-layout.
+Hyprland's native directional move takes a window out of its split and drops
+it next to whatever lies in that direction. Rearranging a Dwindle tree by hand
+then means preselecting sides and rotating splits one step at a time.
 
-It is inspired by old bspwm bubble-move scripts, but it is implemented against
-Hyprland v0.55+'s native layout internals. The plugin reads the active Dwindle
-node, decides whether a move should swap siblings, rotate the current split, or
-move out into a directional target, then delegates the actual layout changes to
-Hyprland.
+=bubblemv= reads the focused window's Dwindle node and picks one of three
+moves:
 
-* Behavior
+- toward its sibling in the same split: swap the two;
+- across the split's orientation: rotate the split so the window lands on the
+  requested side;
+- past the split's outer edge: preselect the side the window came from, then
+  move it out of the split, onto the next monitor if one lies that way.
 
-For the active tiled Dwindle window:
+The layout changes themselves go through Hyprland's Dwindle code. Floating and
+fullscreen windows, and layouts other than Dwindle, get Hyprland's native
+directional move.
 
-- Moving toward an immediate sibling swaps the active node with that sibling.
-- Moving orthogonally to the current split rotates the split so the active
-  window lands on the requested side. By default, that new split uses
-  Hyprland's configured Dwindle split ratio instead of preserving the old
-  split's ratio in the new orientation.
-- Moving out of the current split edge preselects the side the window came from,
-  then uses Hyprland's native directional move. When the move crosses monitors,
-  the preselect is applied to the destination monitor's active workspace.
+* Install
 
-This keeps native Dwindle monitor fallback behavior for cross-monitor moves.
+Requires Hyprland 0.56 or later. Plugins have no stable ABI, so rebuild after
+every Hyprland update (=hyprpm update=). The repository is =hypr-bubblemv=;
+the plugin is =bubblemv=.
+
+#+begin_src sh
+hyprpm add https://github.com/11xx/hypr-bubblemv
+hyprpm enable bubblemv
+hyprpm reload
+#+end_src
+
+Without hyprpm, =make= builds =./bubblemv.so= against the installed Hyprland
+headers, or against a source checkout with =make HYPRLAND_SRC=/path/to/Hyprland=;
+load it with =hyprctl plugin load "$PWD/bubblemv.so"=.
 
 * Usage
 
-For keybinds in Lua config, define a small helper so the plugin runs when the
-key is pressed:
+From the Lua config, bind a closure so the move runs on key press rather than
+while the config loads:
 
 #+begin_src lua
 function bubblemv(direction)
@@ -44,53 +53,22 @@ bind("SUPER + SHIFT + K", bubblemv("up"))
 bind("SUPER + SHIFT + L", bubblemv("right"))
 #+end_src
 
-Do not pass =hl.plugin.bubblemv.move("left")= directly to a bind helper. That
-calls the plugin while the config is loading and passes the returned boolean to
-the bind, not the action itself.
+Or from a shell: =hyprctl dispatch bubblemv up=. Directions are =left=,
+=right=, =up=, =down=, the initials =l=, =r=, =u=, =d=, and =top=/=t=,
+=bottom=/=b=.
 
-From a dispatcher:
-
-#+begin_src sh
-hyprctl dispatch bubblemv up
-#+end_src
-
-Accepted directions are =left=, =right=, =up=, =down=, their first-letter aliases
-=l=, =r=, =u=, =d=, and the aliases =top=, =t=, =bottom=, =b=.
-
-* Configuration
-
-By default, when =bubblemv= rotates a split it resets that node's ratio to
-Hyprland's =dwindle:default_split_ratio=. This avoids carrying a wide 80/20
-horizontal split into an 80/20 vertical split.
-
-To preserve the previous ratio on rotation:
+A rotated split takes =dwindle:default_split_ratio=, so a wide 80/20 split
+does not turn into a tall 80/20 one. To keep the old ratio instead:
 
 #+begin_src lua
-hl.config({
-    plugin = {
-        bubblemv = {
-            reset_split_ratio_on_rotate = false,
-        },
-    },
-})
+hl.config({ plugin = { bubblemv = { reset_split_ratio_on_rotate = false } } })
 #+end_src
-
-* Notes
-
-This plugin is intentionally Dwindle-specific. Floating windows, fullscreen
-windows, non-Dwindle layouts, and unsupported states fall back to Hyprland's
-native directional window move.
-
-Hyprland plugins do not have stable ABI compatibility. Rebuild this plugin after
-updating Hyprland.
 
 * Credits
 
-This plugin was inspired by =bubblemv=, an old bspwm window movement script by
-ortango:
+Modelled on =bubblemv=, a bspwm window-movement script by ortango:
+https://gist.github.com/ortango/29f8f4f4d6465c522e82ac60e64bb35d
 
-- https://gist.github.com/ortango/29f8f4f4d6465c522e82ac60e64bb35d
-- https://www.reddit.com/r/bspwm/comments/lkjk9f/comment/gnladvn/
+* License
 
-* COMMENT Compatibility                                            :noexport:
-- v0.55.1 at commit a47147bc095e5b3be3eb8bd04f0ac242b968cd4d
+Public domain; see [[file:UNLICENSE][UNLICENSE]].
