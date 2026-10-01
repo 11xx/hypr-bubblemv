@@ -183,6 +183,15 @@ namespace {
         return std::clamp(*PDEFAULTSPLIT, 0.1F, 1.9F);
     }
 
+    // With all three off, Dwindle reorients every split from its box shape on
+    // each recalculation, so a rotated split would snap straight back.
+    bool splitsFollowAspectRatio() {
+        static auto PPRESERVESPLIT    = CConfigValue<Config::INTEGER>("dwindle:preserve_split");
+        static auto PSMARTSPLIT       = CConfigValue<Config::INTEGER>("dwindle:smart_split");
+        static auto PPRECISEMOUSEMOVE = CConfigValue<Config::INTEGER>("dwindle:precise_mouse_move");
+        return *PPRESERVESPLIT == 0 && *PSMARTSPLIT == 0 && *PPRECISEMOUSEMOVE == 0;
+    }
+
     SDispatchResult rotateSplit(const SP<Layout::Tiled::SDwindleNodeData>& parent, bool swapChildren) {
         if (!parent)
             return {.success = false, .error = "bubblemv: no parent split"};
@@ -281,6 +290,9 @@ namespace {
 
             return layoutMsg("swapsplit");
         }
+
+        if (splitsFollowAspectRatio())
+            return nativeMove(window, direction);
 
         const bool activeShouldBeFirst = isLowSide(direction.dir);
         return rotateSplit(parent, activeIsFirst != activeShouldBeFirst);

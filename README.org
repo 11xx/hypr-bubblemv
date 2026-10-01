@@ -19,6 +19,10 @@ The layout changes themselves go through Hyprland's Dwindle code. Floating and
 fullscreen windows, and layouts other than Dwindle, get Hyprland's native
 directional move.
 
+Rotating a split needs =dwindle:preserve_split= (or =smart_split= or
+=precise_mouse_move=). Without any of them Dwindle orients every split by its
+shape, so a move across a split also falls back to the native move.
+
 * Install
 
 Requires Hyprland 0.56 or later, and the Lua 5.5 development files Hyprland
