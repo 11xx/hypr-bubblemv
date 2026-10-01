@@ -46,21 +46,24 @@ From the Lua config, bind a closure so the move runs on key press rather than
 while the config loads:
 
 #+begin_src lua
-function bubblemv(direction)
+local function bubblemv(direction)
     return function()
         return hl.plugin.bubblemv.move(direction)
     end
 end
 
-bind("SUPER + SHIFT + H", bubblemv("left"))
-bind("SUPER + SHIFT + J", bubblemv("down"))
-bind("SUPER + SHIFT + K", bubblemv("up"))
-bind("SUPER + SHIFT + L", bubblemv("right"))
+hl.bind("SUPER + SHIFT + H", bubblemv("left"))
+hl.bind("SUPER + SHIFT + J", bubblemv("down"))
+hl.bind("SUPER + SHIFT + K", bubblemv("up"))
+hl.bind("SUPER + SHIFT + L", bubblemv("right"))
 #+end_src
 
-Or from a shell: =hyprctl dispatch bubblemv up=. Directions are =left=,
-=right=, =up=, =down=, the initials =l=, =r=, =u=, =d=, and =top=/=t=,
-=bottom=/=b=.
+From a shell: =hyprctl eval 'hl.plugin.bubblemv.move("up")'=. With a
+hyprlang =hyprland.conf=, the same move is the =bubblemv= dispatcher:
+=bind = SUPER SHIFT, H, bubblemv, left= or =hyprctl dispatch bubblemv up=.
+
+Directions are =left=, =right=, =up=, =down=, the initials =l=, =r=, =u=,
+=d=, and =top=/=t=, =bottom=/=b=, in any letter case.
 
 A rotated split takes =dwindle:default_split_ratio=, so a wide 80/20 split
 does not turn into a tall 80/20 one. To keep the old ratio instead:
