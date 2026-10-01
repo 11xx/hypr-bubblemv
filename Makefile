@@ -10,8 +10,12 @@ ifneq ($(strip $(HYPRLAND_SRC)),)
 INCLUDES += -I$(HYPRLAND_SRC) -I$(HYPRLAND_SRC)/protocols
 endif
 
-LUA_CFLAGS := $(shell pkg-config --cflags lua 2>/dev/null || pkg-config --cflags lua5.4 2>/dev/null || pkg-config --cflags lua-5.4 2>/dev/null)
-LUA_LIBS := $(shell pkg-config --libs lua 2>/dev/null || pkg-config --libs lua5.4 2>/dev/null || pkg-config --libs lua-5.4 2>/dev/null)
+# Hyprland embeds Lua 5.5; plugins must compile against the same headers.
+# The module names and version range match Hyprland's own CMake lookup.
+LUA_PKG := $(firstword $(foreach m,lua55 lua5.5 lua-55 lua-5.5,$(shell pkg-config --exists $(m) 2>/dev/null && echo $(m))) \
+	$(shell pkg-config --exists 'lua >= 5.5' 'lua < 5.6' 2>/dev/null && echo lua))
+LUA_CFLAGS := $(if $(LUA_PKG),$(shell pkg-config --cflags $(LUA_PKG)))
+LUA_LIBS := $(if $(LUA_PKG),$(shell pkg-config --libs $(LUA_PKG)))
 PKG_CFLAGS := $(INCLUDES) $(LUA_CFLAGS)
 PKG_LIBS := $(LUA_LIBS)
 
@@ -28,6 +32,8 @@ check-deps:
 	@if test -z "$(HYPRLAND_SRC)"; then pkg-config --exists hyprland || \
 		(printf 'Missing Hyprland headers. Run hyprpm update, or set PKG_CONFIG_PATH to a directory containing hyprland.pc.\n' >&2; exit 1); \
 	fi
+	@test -n "$(LUA_PKG)" || \
+		(printf 'Missing Lua 5.5 development files (pkg-config module lua55, lua5.5, lua-55, lua-5.5 or lua 5.5.x).\n' >&2; exit 1)
 
 $(TARGET): $(SRC)
 	$(CXX) $(CXXFLAGS) $(PKG_CFLAGS) $< -o $@ $(PKG_LIBS)

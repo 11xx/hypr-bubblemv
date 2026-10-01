@@ -21,8 +21,9 @@ directional move.
 
 * Install
 
-Requires Hyprland 0.56 or later. Plugins have no stable ABI, so rebuild after
-every Hyprland update (=hyprpm update=). The repository is =hypr-bubblemv=;
+Requires Hyprland 0.56 or later, and the Lua 5.5 development files Hyprland
+itself builds against. Plugins have no stable ABI, so rebuild after every
+Hyprland update (=hyprpm update=). The repository is =hypr-bubblemv=;
 the plugin is =bubblemv=.
 
 #+begin_src sh
