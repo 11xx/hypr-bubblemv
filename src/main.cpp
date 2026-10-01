@@ -148,16 +148,26 @@ namespace {
         return {};
     }
 
-    SDispatchResult preselectNativeMoveSide(PHLWINDOW window, const SParsedDirection& direction) {
-        const auto sourceMonitor = window ? window->m_monitor.lock() : nullptr;
-        const auto focalPoint    = focalPointForDirection(window, direction.dir);
-        const auto targetMonitor = focalPoint ? State::monitorState()->query().vec(*focalPoint).run() : nullptr;
-        const auto preselect     = "preselect " + direction.opposite;
+    Layout::Tiled::CDwindleAlgorithm* dwindleOf(const SP<Layout::CSpace>& space) {
+        if (!space || !space->algorithm() || !space->algorithm()->tiledAlgo())
+            return nullptr;
 
-        if (sourceMonitor && targetMonitor && targetMonitor != sourceMonitor && targetMonitor->m_activeWorkspace)
-            return spaceLayoutMsg(targetMonitor->m_activeWorkspace->m_space, preselect);
+        return dynamic_cast<Layout::Tiled::CDwindleAlgorithm*>(space->algorithm()->tiledAlgo().get());
+    }
 
-        return layoutMsg(preselect);
+    // Dwindle consumes a preselect only when the next window splits an
+    // existing tiled one; elsewhere the override would stay armed for an
+    // unrelated window, and other layouts reject the message.
+    SDispatchResult preselectOnMonitor(PHLMONITOR monitor, const SParsedDirection& direction) {
+        static auto PMONITORFALLBACK = CConfigValue<Config::INTEGER>("binds:window_direction_monitor_fallback");
+        if (PMONITORFALLBACK.good() && *PMONITORFALLBACK == 0)
+            return {};
+
+        const auto workspace = monitor ? monitor->m_activeWorkspace : nullptr;
+        if (!workspace || !dwindleOf(workspace->m_space) || workspace->getWindowCount(true) == 0)
+            return {};
+
+        return spaceLayoutMsg(workspace->m_space, "preselect " + direction.opposite);
     }
 
     bool resetSplitRatioOnRotate() {
@@ -234,12 +244,7 @@ namespace {
         if (!target || !target->space())
             return nativeMove(window, direction);
 
-        const auto space = target->space();
-        if (!space || !space->algorithm() || !space->algorithm()->tiledAlgo())
-            return nativeMove(window, direction);
-
-        const auto& tiledAlgo = space->algorithm()->tiledAlgo();
-        auto*       dwindle   = dynamic_cast<Layout::Tiled::CDwindleAlgorithm*>(tiledAlgo.get());
+        auto* dwindle = dwindleOf(target->space());
         if (!dwindle)
             return nativeMove(window, direction);
 
@@ -265,7 +270,7 @@ namespace {
                 const auto sourceMonitor    = window->m_monitor.lock();
                 const auto targetMonitor    = windowFocalPoint ? State::monitorState()->query().vec(*windowFocalPoint).run() : nullptr;
                 if (sourceMonitor && targetMonitor && targetMonitor != sourceMonitor) {
-                    const auto preselect = preselectNativeMoveSide(window, direction);
+                    const auto preselect = preselectOnMonitor(targetMonitor, direction);
                     if (!preselect.success)
                         return preselect;
                     return nativeMove(window, direction);
