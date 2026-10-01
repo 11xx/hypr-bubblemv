@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <cctype>
 #include <optional>
+#include <stdexcept>
 #include <string>
 #include <string_view>
 
@@ -299,6 +300,13 @@ namespace {
 
 APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE handle) {
     PHANDLE = handle;
+
+    // The plugin reads Dwindle's node structs directly, so a build against
+    // other headers than the running compositor's would corrupt memory.
+    if (std::string_view{__hyprland_api_get_hash()} != __hyprland_api_get_client_hash()) {
+        HyprlandAPI::addNotification(PHANDLE, "[bubblemv] Version mismatch: rebuild the plugin against the running Hyprland", CHyprColor{1.0, 0.2, 0.2, 1.0}, 5000);
+        throw std::runtime_error("[bubblemv] Version mismatch");
+    }
 
     HyprlandAPI::addDispatcherV2(PHANDLE, "bubblemv", bubblemvDispatcher);
     HyprlandAPI::addLuaFunction(PHANDLE, "bubblemv", "move", luaBubblemvMove);
